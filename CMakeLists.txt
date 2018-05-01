@@ -14,7 +14,7 @@ endif()
 
 add_custom_command(
   OUTPUT smallpt_ispc.obj
-  COMMAND ${ISPC} --arch=x86-64 -DISPC_USE_CONCRT ${CMAKE_SOURCE_DIR}/smallpt.ispc ${ISPC_FLAGS} -o smallpt_ispc.obj -h smallpt_ispc.h
+  COMMAND ${ISPC} --arch=x86-64 -DISPC_USE_CONCRT ${CMAKE_SOURCE_DIR}/smallpt.ispc ${ISPC_FLAGS} --opt=fast-math -o smallpt_ispc.obj -h smallpt_ispc.h
   DEPENDS smallpt.ispc)
 
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
