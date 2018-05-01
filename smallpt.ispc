@@ -235,11 +235,16 @@ void render(uniform float image[], uniform int x0, uniform int x1, uniform int y
 
 void task run_task(uniform float image[], uniform int width, uniform int height, uniform int samples)
 {
-  render(image, 0, width, taskIndex, taskIndex + 1, width, height, samples);
+  const uniform int x0 = min(taskIndex0 * 32, width);
+  const uniform int x1 = min((taskIndex0 + 1) * 32, width);
+  const uniform int y0 = min(taskIndex1 * 32, height);
+  const uniform int y1 = min((taskIndex1 + 1) * 32, height);
+
+  render(image, x0, x1, y0, y1, width, height, samples);
 }
 
 export void run(uniform float image[], uniform int width, uniform int height, uniform int samples)
 {
-  launch[height] run_task(image, width, height, samples);
+  launch[(width-1)/32+1, (height-1)/32+1] run_task(image, width, height, samples);
   //render(image, 0, width, 0, height, width, height, samples);
 }
