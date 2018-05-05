@@ -3,7 +3,7 @@ typedef float<4> float4;
 
 const int inf = 0x7f800000;
 const float pi = 0x1.921fb54442d18p+1;
-const float eps = 0.05;
+const float eps = 0.5;
 
 inline float3 make_float3(float x, float y, float z) {
   float3 f = { x, y, z };
@@ -77,7 +77,7 @@ uniform Sphere spheres[] = {
   {1e5, {50,-1e5 + 81.6,81.6 }, {0.0, 0.0, 0.0},    { .75,.75,.75 },       DIFF },//Top 
   {16.5,{27,16.5,47 },          {0.0, 0.0, 0.0},    {0.999, 0.999, 0.999}, SPEC },//Mirr 
   {16.5,{73,16.5,78 },          {0.0, 0.0, 0.0},    {0.999, 0.999, 0.999}, REFR },//Glas 
-  {600, {50,681.6-.27,81.6 },   {12.0, 12.0, 12.0}, {0.0, 0.0, 0.0},       DIFF } //Light
+  {13., {50,81.6,81.6 },        {12.0, 12.0, 12.0}, {0.0, 0.0, 0.0},       DIFF } //Light
 };
 
 float intersect(const Ray& r, uniform const Sphere& s)
@@ -141,12 +141,12 @@ float3 shade(Ray& ray, float t, int id, int depth, varying RNGState * uniform Xi
 
       const float3 d = norm(u*cos(r1)*r2s + v * sin(r1)*r2s + w * sqrt(1 - r2));
 
-      ray.org = x + eps * d;
+      ray.org = x;
       ray.dir = d;
       ray.weight = ray.weight * f;
     } else if (refl == SPEC) {
       const float3 d = ray.dir - n * 2 * dot(n, ray.dir);
-      ray.org = x + eps * d;
+      ray.org = x;
       ray.dir = d;
       ray.weight = ray.weight * f;
     } else {
@@ -157,7 +157,7 @@ float3 shade(Ray& ray, float t, int id, int depth, varying RNGState * uniform Xi
       const float ddn = dot(ray.dir, nl);
       const float cos2t = 1 - nnt * nnt*(1 - ddn * ddn);
       if (cos2t < 0) {  // TIR
-        ray.org = x + eps * reflDir;
+        ray.org = x;
         ray.dir = reflDir;
         ray.weight = ray.weight * f;
       } else {
@@ -170,12 +170,12 @@ float3 shade(Ray& ray, float t, int id, int depth, varying RNGState * uniform Xi
         const float P = .25 + .5*Re;
         if (frandom(Xi) < P) {
           const float RP = Re / P;
-          ray.org = x + eps * reflDir;
+          ray.org = x;
           ray.dir = reflDir;
           ray.weight = ray.weight * f * RP;
         } else {
           const float TP = Tr / (1 - P);
-          ray.org = x + eps * tdir;
+          ray.org = x;
           ray.dir = tdir;
           ray.weight = ray.weight * f * TP;
         }
@@ -200,7 +200,7 @@ void render(uniform float image[], uniform int x0, uniform int x1, uniform int y
     seed_rng(&Xi, y * width + x);
 
     for (int sy = 0; sy < 2; sy++) {      // 2x2 subpixel rows
-      for (int sx = 0; sx < 2; sx++) {  // 2x2 subpixel cols
+      for (int sx = 0; sx < 2; sx++) {    // 2x2 subpixel cols
         for (int s = 0; s < samples; ++s) {
           const float r1 = 2 * frandom(&Xi);
           const float dx = r1 < 1 ? sqrt(r1) - 1 : 1 - sqrt(2 - r1);
