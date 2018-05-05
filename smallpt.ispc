@@ -1,5 +1,4 @@
 typedef float<3> float3;
-typedef float<4> float4;
 
 const int inf = 0x7f800000;
 const float pi = 0x1.921fb54442d18p+1;
@@ -233,18 +232,42 @@ void render(uniform float image[], uniform int x0, uniform int x1, uniform int y
   }
 }
 
-void task run_task(uniform float image[], uniform int width, uniform int height, uniform int samples)
+void print_target() {
+  print("Target: ");
+#ifdef ISPC_TARGET_SSE2
+  print("SSE2");
+#elif ISPC_TARGET_SSE4
+  print("SSE4");
+#elif ISPC_TARGET_AVX
+  print("AVX");
+#elif ISPC_TARGET_AVX11
+  print("AVX11");
+#elif ISPC_TARGET_AVX2
+  print("AVX2");
+#elif ISPC_TARGET_AVX512KNL
+  print("AVX512KNL");
+#elif ISPC_TARGET_AVX512SKX
+  print("AVX512SKX");
+#endif
+  print("\n");
+}
+
+void task render_task(uniform float image[], uniform int width, uniform int height, uniform int samples)
 {
-  const uniform int x0 = min(taskIndex0 * 32, width);
-  const uniform int x1 = min((taskIndex0 + 1) * 32, width);
-  const uniform int y0 = min(taskIndex1 * 32, height);
-  const uniform int y1 = min((taskIndex1 + 1) * 32, height);
+  const uniform int x0 = min(taskIndex0 * 32, (uniform unsigned int)width);
+  const uniform int x1 = min((taskIndex0 + 1) * 32, (uniform unsigned int)width);
+  const uniform int y0 = min(taskIndex1 * 32, (uniform unsigned int)height);
+  const uniform int y1 = min((taskIndex1 + 1) * 32, (uniform unsigned int)height);
 
   render(image, x0, x1, y0, y1, width, height, samples);
 }
 
-export void run(uniform float image[], uniform int width, uniform int height, uniform int samples)
+export void run(uniform float image[], uniform int width, uniform int height, uniform int samples, uniform bool mt)
 {
-  launch[(width-1)/32+1, (height-1)/32+1] run_task(image, width, height, samples);
-  //render(image, 0, width, 0, height, width, height, samples);
+  print_target();
+  if (mt) {
+    launch[(width - 1) / 32 + 1, (height - 1) / 32 + 1] render_task(image, width, height, samples);
+  } else {
+    render(image, 0, width, 0, height, width, height, samples);
+  }
 }

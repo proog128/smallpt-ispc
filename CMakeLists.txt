@@ -19,6 +19,6 @@ add_custom_command(
 
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
-add_executable(smallpt smallpt_ispc.obj smallpt.cpp tasksys.cpp)
+add_executable(smallpt smallpt_ispc.obj smallpt.cpp smallpt_c.cpp tasksys.cpp)
 
 target_link_libraries(smallpt)
