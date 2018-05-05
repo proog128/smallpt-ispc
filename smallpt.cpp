@@ -47,6 +47,4 @@ int main(int argc, char* argv[])
   fprintf(f, "PF\n%d %d\n%d\n", w, h, -1);
   fwrite(image.data(), sizeof(float), w*h * 3, f);
   fclose(f);
-
-  getchar();
 }
