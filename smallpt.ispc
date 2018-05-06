@@ -107,7 +107,7 @@ bool intersect(const Ray& r, float& t, int& id)
   return t<inf;
 }
 
-float3 shade(Ray& ray, float t, int id, int depth, varying RNGState * uniform Xi)
+float3 shade(Ray& ray, float t, int id, int depth, uniform int maxBounces, uniform bool rr, varying RNGState * uniform Xi)
 {
   const float3 x = ray.org + t * ray.dir;
   const float3 n = norm(x - spheres[id].position);
@@ -120,8 +120,8 @@ float3 shade(Ray& ray, float t, int id, int depth, varying RNGState * uniform Xi
   float3 f = spheres[id].color;
   float max_refl = max(f);
   cif (max_refl > 0.0f) {
-    if (depth > 5) {
-      if (frandom(Xi) < max_refl) {
+    if (depth >= maxBounces) {
+      if (rr && frandom(Xi) < max_refl) {
         f = f * (1 / max_refl);
       } else {
         return R;
@@ -185,7 +185,7 @@ float3 shade(Ray& ray, float t, int id, int depth, varying RNGState * uniform Xi
   return R;
 }
 
-void render(uniform float image[], uniform int x0, uniform int x1, uniform int y0, uniform int y1, uniform int width, uniform int height, uniform int samples)
+void render(uniform float image[], uniform int x0, uniform int x1, uniform int y0, uniform int y1, uniform int width, uniform int height, uniform int samples, uniform int maxBounces, uniform bool rr)
 {
   uniform float3 camDir = { 0.0f, -0.042612f, -1.0f };
   uniform Ray cam = { { 50.0f, 52.0f, 295.6f }, norm(camDir) };
@@ -216,7 +216,7 @@ void render(uniform float image[], uniform int x0, uniform int x1, uniform int y
             int id;
             if (!intersect(ray, t, id)) break;
 
-            float3 color = shade(ray, t, id, depth, &Xi);
+            float3 color = shade(ray, t, id, depth, maxBounces, rr, &Xi);
 
             const float w = 0.25 * (1.0 / samples);
             int offset = 3 * (y * width + x);
@@ -252,22 +252,22 @@ void print_target() {
   print("\n");
 }
 
-void task render_task(uniform float image[], uniform int width, uniform int height, uniform int samples)
+void task render_task(uniform float image[], uniform int width, uniform int height, uniform int samples, uniform int maxBounces, uniform bool rr)
 {
   const uniform int x0 = min(taskIndex0 * 32, (uniform unsigned int)width);
   const uniform int x1 = min((taskIndex0 + 1) * 32, (uniform unsigned int)width);
   const uniform int y0 = min(taskIndex1 * 32, (uniform unsigned int)height);
   const uniform int y1 = min((taskIndex1 + 1) * 32, (uniform unsigned int)height);
 
-  render(image, x0, x1, y0, y1, width, height, samples);
+  render(image, x0, x1, y0, y1, width, height, samples, maxBounces, rr);
 }
 
-export void run(uniform float image[], uniform int width, uniform int height, uniform int samples, uniform bool mt)
+export void run(uniform float image[], uniform int width, uniform int height, uniform int samples, uniform int maxBounces, uniform bool rr, uniform bool mt)
 {
   print_target();
   if (mt) {
-    launch[(width - 1) / 32 + 1, (height - 1) / 32 + 1] render_task(image, width, height, samples);
+    launch[(width - 1) / 32 + 1, (height - 1) / 32 + 1] render_task(image, width, height, samples, maxBounces, rr);
   } else {
-    render(image, 0, width, 0, height, width, height, samples);
+    render(image, 0, width, 0, height, width, height, samples, maxBounces, rr);
   }
 }

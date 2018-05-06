@@ -26,17 +26,19 @@ int main(int argc, char* argv[])
   int samps4 = argc >= 4 ? atoi(argv[3]) : 8;
   int mode = argc >= 5 ? atoi(argv[4]) : 0;
   int mt = argc >= 6 ? atoi(argv[5]) : 0;
+  int maxBounces = argc >= 7 ? atoi(argv[6]) : 5;
+  bool rr = argc >= 8 ? bool(atoi(argv[7])) : true;
 
-  printf("Rendering %d spp at %dx%d in %s (%s) mode...\n", 4 * samps4, w, h, mode == 0 ? "ISPC" : "MSVC", mt == 0 ? "single-threaded" : "multi-threaded");
+  printf("Rendering %d spp at %dx%d in %s (%s) mode with %d bounces (%s)...\n", 4 * samps4, w, h, mode == 0 ? "ISPC" : "MSVC", mt == 0 ? "single-threaded" : "multi-threaded", maxBounces, rr ? "rr" : "no-rr");
 
   std::vector<float> image(w * h * 3, 0.0f);
 
   clock_t begin = clock();
   
   if (mode == 0) {
-    run(image.data(), w, h, samps4, mt);
+    run(image.data(), w, h, samps4, maxBounces, rr, mt);
   } else {
-    run_c(image.data(), w, h, samps4, mt);
+    run_c(image.data(), w, h, samps4, maxBounces, rr, mt);
   }
   
   clock_t end = clock();

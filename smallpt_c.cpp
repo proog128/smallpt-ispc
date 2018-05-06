@@ -137,7 +137,7 @@ bool intersect(const Ray& r, float& t, int& id)
   return t<INFINITY;
 }
 
-float3 shade(Ray& ray, float t, int id, int depth, RNGState* Xi)
+float3 shade(Ray& ray, float t, int id, int depth, int maxBounces, bool rr, RNGState* Xi)
 {
   const float3 x = ray.org + t * ray.dir;
   const float3 n = norm(x - spheres[id].position);
@@ -150,8 +150,8 @@ float3 shade(Ray& ray, float t, int id, int depth, RNGState* Xi)
   float3 f = spheres[id].color;
   float max_refl = max(f);
   if(max_refl > 0.0f) {
-    if (depth > 5) {
-      if (frandom(Xi) < max_refl) {
+    if (depth >= maxBounces) {
+      if (rr && frandom(Xi) < max_refl) {
         f = (1 / max_refl) * f;
       } else {
         return R;
@@ -215,7 +215,7 @@ float3 shade(Ray& ray, float t, int id, int depth, RNGState* Xi)
   return R;
 }
 
-void render(float image[], int x0, int x1, int y0, int y1, int width, int height, int samples)
+void render(float image[], int x0, int x1, int y0, int y1, int width, int height, int samples, int maxBounces, bool rr)
 {
   float3 camDir = { 0.0f, -0.042612f, -1.0f };
   Ray cam = { { 50.0f, 52.0f, 295.6f }, norm(camDir) };
@@ -247,7 +247,7 @@ void render(float image[], int x0, int x1, int y0, int y1, int width, int height
               int id;
               if (!intersect(ray, t, id)) break;
 
-              float3 color = shade(ray, t, id, depth, &Xi);
+              float3 color = shade(ray, t, id, depth, maxBounces, rr, &Xi);
 
               const float w = 0.25f * (1.0f / samples);
               int offset = 3 * (y * width + x);
@@ -264,11 +264,11 @@ void render(float image[], int x0, int x1, int y0, int y1, int width, int height
   }
 }
 
-void run_c(float* image, int32_t width, int32_t height, int32_t samples, bool mt)
+void run_c(float* image, int width, int height, int samples, int maxBounces, bool rr, bool mt)
 {
   if (mt) {
     printf("Not supported.\n");
   } else {
-    render(image, 0, width, 0, height, width, height, samples);
+    render(image, 0, width, 0, height, width, height, samples, maxBounces, rr);
   }
 }
